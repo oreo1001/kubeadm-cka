@@ -58,8 +58,18 @@ Windows(VirtualBox) 환경도 지원한다.
 # 1. KVM + libvirt 설치
 sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients
 
-# 2. Vagrant + libvirt 플러그인 설치
-sudo apt install -y vagrant
+# 2. Vagrant + libvirt 플러그인 설치 
+
+# HashiCorp GPG 키 + 저장소 추가
+wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
+sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+sudo apt update && sudo apt install -y vagrant
+sudo apt install -y libvirt-dev libvirt-daemon-system libvirt-clients qemu-kvm
+
 vagrant plugin install vagrant-libvirt
 
 # 3. 현재 유저를 libvirt/kvm 그룹에 추가
@@ -67,8 +77,7 @@ sudo usermod -aG libvirt,kvm $USER
 newgrp libvirt   # 또는 재로그인
 
 # 4. Ansible + sshpass 설치
-sudo apt install -y python3-pip sshpass
-pip3 install ansible
+sudo apt install -y ansible sshpass
 
 # 5. 설치 확인
 kvm-ok
@@ -89,8 +98,6 @@ vagrant up
 cd ../ansible
 cp inventory/hosts-linux.ini inventory/hosts.ini
 
-# 3. group_vars master_ip 확인 (기본값: 192.168.121.10)
-# ansible/group_vars/all.yml 참고
 
 # 4. SSH 키 배포
 #    vagrant-libvirt가 생성한 키 경로 확인
