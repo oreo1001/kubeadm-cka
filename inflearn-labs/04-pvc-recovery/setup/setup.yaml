@@ -1,0 +1,28 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: manual
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate
+reclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: old-data-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/old-data
+    type: DirectoryOrCreate
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: old-pvc
+    namespace: default
+    uid: "00000000-0000-0000-0000-000000000000"

@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: restored-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  volumeName: old-data-pv
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-pod
+  namespace: default
+spec:
+  containers:
+    - name: app
+      image: nginx:alpine
+      volumeMounts:
+        - name: data-volume
+          mountPath: /data
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "64Mi"
+  volumes:
+    - name: data-volume
+      persistentVolumeClaim:
+        claimName: restored-pvc

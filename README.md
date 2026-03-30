@@ -162,6 +162,8 @@ vagrant destroy -f && vagrant up
 
 cd ../ansible
 ansible-playbook playbooks/setup_cluster.yml
+
+vagrant halt # VM 끄고 중지, 디스크만 남음
 ```
 
 ---
@@ -184,6 +186,11 @@ ansible-playbook playbooks/setup_cluster.yml
 | 12 | explain 명령어 활용 | [labs/12-explain/](labs/12-explain/) |
 | 13 | PV / PVC 생성 | [labs/13-pv-pvc/](labs/13-pv-pvc/) |
 | 14 | Ingress → Gateway/HTTPRoute (TLS) 마이그레이션 | [labs/14-gateway-migration/](labs/14-gateway-migration/) |
+| 15 | ConfigMap 수정 및 Pod 반영 | [labs/15-configmap/](labs/15-configmap/) |
+| 16 | Ingress 생성 (L7 경로 기반 라우팅) | [labs/16-ingress/](labs/16-ingress/) |
+| 17 | 핵심 컴포넌트 장애 대응 (apiserver / kubelet) | [labs/17-troubleshooting/](labs/17-troubleshooting/) |
+| 18 | 리소스 최적화 (LimitRange + ResourceQuota) | [labs/18-resource-management/](labs/18-resource-management/) |
+| 19 | PVC 복구 (Released PV 재사용) | [labs/19-pvc-recovery/](labs/19-pvc-recovery/) |
 
 ---
 

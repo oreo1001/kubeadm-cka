@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: team-a-limits
+  namespace: team-a
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "500m"
+        memory: "256Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "128Mi"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-a-quota
+  namespace: team-a
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "2"
+    requests.memory: "2Gi"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: critical-priority
+value: 1000000
+globalDefault: false
+description: "Critical workloads that must be scheduled first"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: critical-pod
+  namespace: default
+spec:
+  priorityClassName: critical-priority
+  containers:
+    - name: app
+      image: nginx:alpine
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "64Mi"
+        limits:
+          cpu: "200m"
+          memory: "128Mi"
