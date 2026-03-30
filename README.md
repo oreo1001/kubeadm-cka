@@ -89,22 +89,30 @@ ansible --version
 
 ## 실행 순서
 
+### 최초 1회: 의존성 설치
+
 ```bash
-# 1. VM 시작
-cd linux
-vagrant up
+bash scripts/install-deps.sh
 
-# 2. inventory 설정
-cd ../ansible
-cp inventory/hosts-linux.ini inventory/hosts.ini
+# 설치 후 그룹 적용
+newgrp libvirt   # 또는 재로그인
+```
 
-# 3. 연결 확인 (ansible/ 디렉토리에서 실행)
-ansible all -m ping
+### 클러스터 설치
 
-# 6. 클러스터 설치 (~15분)
-ansible-playbook playbooks/setup_cluster.yml
+```bash
+bash scripts/setup.sh
+```
 
-# 7. kubectl 사용
+스크립트가 자동으로 수행하는 작업:
+1. `linux/vagrant up` — VM 3개 시작
+2. `hosts-linux.ini → hosts.ini` 복사
+3. `ansible all -m ping` — SSH 연결 확인
+4. `ansible-playbook setup_cluster.yml` — kubeadm 클러스터 설치
+
+### kubectl 사용
+
+```bash
 export KUBECONFIG=~/kubeadm-cka/kubeconfig
 kubectl get nodes
 ```
