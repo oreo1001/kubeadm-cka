@@ -1,111 +1,79 @@
 # CKA 온프렘 실습 클러스터 (kubeadm)
 
-Ubuntu 서버 4대에 kubeadm으로 Kubernetes 클러스터(1 Master + 3 Worker)를 구성하는 CKA 시험 준비 프로젝트.
+Ubuntu 서버에서 KVM/libvirt + Vagrant로 VM 3개를 띄우고,
+kubeadm으로 Kubernetes 클러스터(1 master + 2 worker)를 구성하는 CKA 시험 준비 프로젝트.
+
+Windows(VirtualBox) 환경도 지원한다.
 
 ## 프로젝트 구조
 
 ```
 .
-├── Vagrantfile              # 로컬 VM 실습 시 사용 (선택사항)
+├── linux/
+│   └── Vagrantfile          # KVM/libvirt 환경 (기본)
+├── windows/
+│   └── Vagrantfile          # VirtualBox 환경
 ├── ansible/
 │   ├── ansible.cfg
-│   ├── group_vars/all.yml   # k8s 버전, CIDR 설정
-│   ├── inventory/hosts.ini  # 서버 IP 입력
+│   ├── group_vars/all.yml
+│   ├── inventory/
+│   │   ├── hosts.ini            # 현재 사용 중인 inventory
+│   │   ├── hosts-linux.ini      # Linux IP 템플릿 (192.168.121.x)
+│   │   └── hosts-windows.ini    # Windows IP 템플릿 (192.168.56.x)
 │   ├── playbooks/
 │   │   └── setup_cluster.yml
 │   └── roles/
-│       ├── common/          # swap off, containerd, kubeadm 설치
-│       ├── master/          # kubeadm init, Calico CNI, kubeconfig
-│       └── worker/          # kubeadm join
+│       ├── common/
+│       ├── master/
+│       └── worker/
 ├── labs/                    # CKA 실습 문제 14개
-│   ├── 01-priorityclass/
-│   ├── 02-dpkg-install/
-│   ├── 03-helm-argocd/
-│   ├── 04-hpa/
-│   ├── 05-etcd-backup/
-│   ├── 06-nodeport/
-│   ├── 07-cni/
-│   ├── 08-sidecar/
-│   ├── 09-networkpolicy/
-│   ├── 10-storageclass/
-│   ├── 11-pod-filter/
-│   ├── 12-explain/
-│   ├── 13-pv-pvc/
-│   └── 14-gateway-migration/
 └── scripts/
-    ├── setup.sh             # Ansible 실행 래퍼
-    └── reset.sh             # 클러스터 리셋
+    ├── setup.sh
+    └── reset.sh
 ```
 
-## 인프라 스펙
+## VM 스펙
 
-| 역할     | 권장 사양       | 비고 |
-|----------|-----------------|------|
-| master   | 2 CPU / 4GB RAM | kubeadm init |
-| worker-1 | 2 CPU / 2GB RAM | kubeadm join |
-| worker-2 | 2 CPU / 2GB RAM | kubeadm join |
-| worker-3 | 2 CPU / 2GB RAM | kubeadm join |
+| 역할     | CPU | RAM   |
+|----------|-----|-------|
+| master   | 2   | 2GB   |
+| worker-1 | 1   | 1.5GB |
+| worker-2 | 1   | 1.5GB |
+| **합계** | **4** | **5GB** |
 
-- OS: Ubuntu 22.04 LTS (Jammy)
-- Kubernetes: v1.31
+- OS: Ubuntu 22.04 LTS
+- Kubernetes: v1.31 (kubeadm)
 - CNI: Calico v3.28
 - Container runtime: containerd
 
+> master는 kubeadm 요구사항상 CPU 2개 미만이면 preflight 오류가 발생한다.
+> worker는 1 CPU / 1.5GB RAM으로도 CKA 실습에 충분하다.
+> ArgoCD 같이 무거운 워크로드는 worker에 배포되므로 master 메모리는 2GB면 충분하다.
+
 ---
 
-## 사전 준비
-
-### 1. Ansible 설치 (컨트롤 노드 = 작업하는 Ubuntu 서버)
+## 사전 준비 (Linux / KVM)
 
 ```bash
-# pip로 설치 (권장)
-sudo apt update
-sudo apt install -y python3 python3-pip sshpass
+# 1. KVM + libvirt 설치
+sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients
+
+# 2. Vagrant + libvirt 플러그인 설치
+sudo apt install -y vagrant
+vagrant plugin install vagrant-libvirt
+
+# 3. 현재 유저를 libvirt/kvm 그룹에 추가
+sudo usermod -aG libvirt,kvm $USER
+newgrp libvirt   # 또는 재로그인
+
+# 4. Ansible + sshpass 설치
+sudo apt install -y python3-pip sshpass
 pip3 install ansible
 
-# 또는 apt로 설치
-sudo apt install -y ansible
-
-# 설치 확인
+# 5. 설치 확인
+kvm-ok
+vagrant --version
 ansible --version
-```
-
-### 2. SSH 키 생성 및 배포
-
-컨트롤 노드에서 모든 타깃 노드로 패스워드 없이 SSH 접속이 가능해야 한다.
-
-```bash
-# SSH 키 생성 (없는 경우)
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
-
-# 각 노드에 공개키 복사
-ssh-copy-id ubuntu@<master-ip>
-ssh-copy-id ubuntu@<worker-1-ip>
-ssh-copy-id ubuntu@<worker-2-ip>
-ssh-copy-id ubuntu@<worker-3-ip>
-
-# 접속 확인
-ssh ubuntu@<master-ip> "hostname"
-```
-
-> SSH 키 복사 시 타깃 노드의 ubuntu 계정 패스워드가 필요하다.
-> `ssh-copy-id` 대신 아래 방법도 가능하다:
-> ```bash
-> cat ~/.ssh/id_rsa.pub | ssh ubuntu@<ip> "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
-> ```
-
-### 3. Inventory 파일 수정
-
-`ansible/inventory/hosts.ini`에 실제 서버 IP를 입력한다.
-
-```ini
-[master]
-master ansible_host=<master-ip>
-
-[workers]
-worker-1 ansible_host=<worker-1-ip>
-worker-2 ansible_host=<worker-2-ip>
-worker-3 ansible_host=<worker-3-ip>
 ```
 
 ---
@@ -113,17 +81,30 @@ worker-3 ansible_host=<worker-3-ip>
 ## 실행 순서
 
 ```bash
-# 프로젝트 루트로 이동
-cd ~/kubeadm-cka
+# 1. VM 시작
+cd linux
+vagrant up
 
-# 1. Inventory 연결 확인
-ansible all -m ping -i ansible/inventory/hosts.ini
+# 2. inventory 설정
+cd ../ansible
+cp inventory/hosts-linux.ini inventory/hosts.ini
 
-# 2. 클러스터 설치 (~15분)
-cd ansible
+# 3. group_vars master_ip 확인 (기본값: 192.168.121.10)
+# ansible/group_vars/all.yml 참고
+
+# 4. SSH 키 배포
+#    vagrant-libvirt가 생성한 키 경로 확인
+vagrant ssh-config master | grep IdentityFile
+#    출력 예: /home/user/.vagrant.d/insecure_private_keys/vagrant.key.rsa
+#    ansible.cfg의 private_key_file을 해당 경로로 수정
+
+# 5. 연결 확인
+ansible all -m ping
+
+# 6. 클러스터 설치 (~15분)
 ansible-playbook playbooks/setup_cluster.yml
 
-# 3. kubectl 사용
+# 7. kubectl 사용
 export KUBECONFIG=~/kubeadm-cka/kubeconfig
 kubectl get nodes
 ```
@@ -135,7 +116,32 @@ NAME       STATUS   ROLES           AGE   VERSION
 master     Ready    control-plane   5m    v1.31.x
 worker-1   Ready    <none>          3m    v1.31.x
 worker-2   Ready    <none>          3m    v1.31.x
-worker-3   Ready    <none>          3m    v1.31.x
+```
+
+---
+
+## Windows 환경 (VirtualBox)
+
+```powershell
+# 1. VirtualBox / Vagrant 설치 후
+cd windows
+vagrant up
+```
+
+```bash
+# 2. WSL2에서 Ansible 실행
+sudo apt install -y python3-pip sshpass
+pip3 install ansible
+
+cd /path/to/kubeadm-cka/ansible
+cp inventory/hosts-windows.ini inventory/hosts.ini
+# group_vars/all.yml의 master_ip를 192.168.56.10으로 수정
+
+ansible all -m ping
+ansible-playbook playbooks/setup_cluster.yml
+
+export KUBECONFIG=/path/to/kubeadm-cka/kubeconfig
+kubectl get nodes
 ```
 
 ---
@@ -143,10 +149,11 @@ worker-3   Ready    <none>          3m    v1.31.x
 ## 클러스터 리셋
 
 ```bash
-bash scripts/reset.sh
+cd linux   # 또는 windows
+vagrant destroy -f && vagrant up
 
-# 재설치
-cd ansible && ansible-playbook playbooks/setup_cluster.yml
+cd ../ansible
+ansible-playbook playbooks/setup_cluster.yml
 ```
 
 ---
@@ -175,10 +182,8 @@ cd ansible && ansible-playbook playbooks/setup_cluster.yml
 ## 주의사항
 
 - `ansible-playbook`은 `ansible/` 디렉토리 안에서 실행해야 `ansible.cfg`가 적용됨
-- `serial: 1` — common role은 순차 실행 (containerd 설치 충돌 방지)
-- kubeadm은 노드당 최소 **2 CPU, 2GB RAM** 필요 (미달 시 `preflight error`)
-- `kubeconfig`는 `ansible-playbook` 완료 후 프로젝트 루트에 자동 생성됨
-- Ubuntu 22.04 기준. 24.04는 containerd 설정이 일부 다를 수 있음
+- 환경 전환 시 `hosts.ini`와 `group_vars/all.yml`의 `master_ip` 두 곳을 수정해야 함
+- kubeadm master는 **CPU 2개 필수** (1개면 preflight 오류)
 
 ---
 
@@ -187,36 +192,23 @@ cd ansible && ansible-playbook playbooks/setup_cluster.yml
 ### ansible ping 실패
 
 ```bash
-# SSH 접속 가능한지 먼저 확인
-ssh ubuntu@<ip>
+# SSH 직접 접속 테스트
+ssh -i ~/.vagrant.d/insecure_private_keys/vagrant.key.rsa ubuntu@192.168.121.10
 
-# 패스워드 인증이 필요한 경우 sshpass 방식으로 임시 실행
-ansible all -m ping -k   # SSH 패스워드 입력 프롬프트
+# vagrant ssh-config로 정확한 키 경로 확인
+cd linux && vagrant ssh-config master
 ```
 
-### kubeadm init 실패 — "number of CPUs ... is less than the minimum"
+### kubeadm preflight 오류 — CPU
 
 ```bash
-# 노드 CPU 확인
-ssh ubuntu@<master-ip> "nproc"
+ssh ubuntu@192.168.121.10 "nproc"
 # 2 이상이어야 함
 ```
 
-### kubeadm init 실패 — swap is enabled
+### Worker 노드 NotReady
 
 ```bash
-# 노드에서 직접 확인
-ssh ubuntu@<master-ip> "sudo swapon --show"
-# 출력이 있으면 common role이 실패한 것 → 수동 실행
-ssh ubuntu@<master-ip> "sudo swapoff -a"
-```
-
-### Worker 노드가 Ready 상태가 되지 않음
-
-```bash
-# CNI Pod 상태 확인
 kubectl get pods -n kube-system -l k8s-app=calico-node
-
-# 노드 상세 조건 확인
 kubectl describe node worker-1 | grep -A 10 Conditions
 ```

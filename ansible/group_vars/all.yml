@@ -1,5 +1,9 @@
 kubernetes_version: "1.31"
 pod_cidr:           "10.244.0.0/16"
 service_cidr:       "10.96.0.0/12"
-master_ip:          "192.168.56.10"
 calico_version:     "v3.28.0"
+
+# 환경에 맞게 수정
+# Windows (VirtualBox): 192.168.56.10
+# Linux   (KVM):        192.168.121.10
+master_ip: "192.168.56.10"
