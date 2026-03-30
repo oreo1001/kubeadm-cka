@@ -2,6 +2,7 @@
 - name: "01. 공통 초기화 (모든 노드)"
   hosts: all
   gather_facts: true
+  become: true
   serial: 1
   roles:
     - common
@@ -9,12 +10,14 @@
 - name: "02. 마스터 노드 설정 (kubeadm init + CNI)"
   hosts: master
   gather_facts: true
+  become: true
   roles:
     - master
 
 - name: "03. 워커 노드 조인 (kubeadm join)"
   hosts: workers
   gather_facts: true
+  become: true
   serial: 1
   roles:
     - worker
@@ -22,14 +25,14 @@
 - name: "04. 클러스터 상태 확인"
   hosts: master
   gather_facts: false
+  become: true
   tasks:
     - name: 모든 노드가 Ready 상태가 될 때까지 대기
       command: kubectl get nodes
-      become_user: ubuntu
       environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
+        KUBECONFIG: /home/vagrant/.kube/config
       register: node_status
-      until: node_status.stdout.count("Ready") >= 4
+      until: node_status.stdout.count("Ready") >= 3
       retries: 24
       delay: 15
 

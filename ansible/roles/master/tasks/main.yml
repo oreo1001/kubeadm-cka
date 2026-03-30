@@ -21,23 +21,23 @@
   when: not kubeadm_init_done.stat.exists
 
 # ---------------------------------------------------------------
-# 2. kubectl 설정 (ubuntu 유저)
+# 2. kubectl 설정 (vagrant 유저)
 # ---------------------------------------------------------------
 - name: .kube 디렉토리 생성
   file:
-    path: /home/ubuntu/.kube
+    path: /home/vagrant/.kube
     state: directory
-    owner: ubuntu
-    group: ubuntu
+    owner: vagrant
+    group: vagrant
     mode: '0755'
 
 - name: admin.conf → kubeconfig 복사
   copy:
     src: /etc/kubernetes/admin.conf
-    dest: /home/ubuntu/.kube/config
+    dest: /home/vagrant/.kube/config
     remote_src: yes
-    owner: ubuntu
-    group: ubuntu
+    owner: vagrant
+    group: vagrant
     mode: '0600'
 
 # ---------------------------------------------------------------
@@ -47,9 +47,8 @@
   command: >
     kubectl apply -f
     https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml
-  become_user: ubuntu
   environment:
-    KUBECONFIG: /home/ubuntu/.kube/config
+    KUBECONFIG: /home/vagrant/.kube/config
   register: calico_result
   until: calico_result.rc == 0
   retries: 5
@@ -73,19 +72,18 @@
 # ---------------------------------------------------------------
 - name: kubectl bash completion 및 alias 설정
   blockinfile:
-    path: /home/ubuntu/.bashrc
+    path: /home/vagrant/.bashrc
     block: |
       source <(kubectl completion bash)
       alias k=kubectl
       complete -o default -F __start_kubectl k
-      export KUBECONFIG=/home/ubuntu/.kube/config
-    owner: ubuntu
+      export KUBECONFIG=/home/vagrant/.kube/config
 
 # ---------------------------------------------------------------
-# 6. kubeconfig 로컬 복사 (WSL2 → kubectl 직접 사용)
+# 6. kubeconfig 로컬 복사
 # ---------------------------------------------------------------
 - name: kubeconfig를 로컬 프로젝트 루트로 복사
   fetch:
-    src: /home/ubuntu/.kube/config
+    src: /home/vagrant/.kube/config
     dest: "{{ playbook_dir }}/../../kubeconfig"
     flat: yes
