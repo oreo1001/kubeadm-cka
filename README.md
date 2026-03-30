@@ -98,14 +98,7 @@ vagrant up
 cd ../ansible
 cp inventory/hosts-linux.ini inventory/hosts.ini
 
-
-# 4. SSH 키 배포
-#    vagrant-libvirt가 생성한 키 경로 확인
-vagrant ssh-config master | grep IdentityFile
-#    출력 예: /home/user/.vagrant.d/insecure_private_keys/vagrant.key.rsa
-#    ansible.cfg의 private_key_file을 해당 경로로 수정
-
-# 5. 연결 확인
+# 3. 연결 확인 (ansible/ 디렉토리에서 실행)
 ansible all -m ping
 
 # 6. 클러스터 설치 (~15분)
