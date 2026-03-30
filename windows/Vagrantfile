@@ -1,0 +1,49 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+# [Windows] VirtualBox 환경
+# 사전 요구사항:
+#   - VirtualBox 설치: https://www.virtualbox.org/
+#   - Vagrant 설치:    https://www.vagrantup.com/
+#
+# 리소스 합계: CPU 6코어, RAM 8GB
+# 갤럭시북3 기준 16GB RAM 권장, 8GB이면 worker 메모리 1536으로 줄일 것
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+  config.vm.box_check_update = false
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  nodes = [
+    { name: "master",   ip: "192.168.56.10", cpu: 2, mem: 4096 },
+    { name: "worker-1", ip: "192.168.56.11", cpu: 2, mem: 2048 },
+    { name: "worker-2", ip: "192.168.56.12", cpu: 2, mem: 2048 },
+  ]
+
+  nodes.each do |node|
+    config.vm.define node[:name] do |vm_config|
+      vm_config.vm.hostname = node[:name]
+      vm_config.vm.network "private_network", ip: node[:ip]
+
+      vm_config.vm.provider "virtualbox" do |vb|
+        vb.name   = "cka-#{node[:name]}"
+        vb.cpus   = node[:cpu]
+        vb.memory = node[:mem]
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      end
+
+      # ubuntu 유저 + SSH 키 인증 설정 (Ansible용)
+      vm_config.vm.provision "shell", inline: <<-SHELL
+        if ! id -u ubuntu &>/dev/null; then
+          useradd -m -s /bin/bash ubuntu
+        fi
+        echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu
+        mkdir -p /home/ubuntu/.ssh
+        cp /home/vagrant/.ssh/authorized_keys /home/ubuntu/.ssh/authorized_keys
+        chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+        chmod 700 /home/ubuntu/.ssh
+        chmod 600 /home/ubuntu/.ssh/authorized_keys
+      SHELL
+    end
+  end
+end

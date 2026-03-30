@@ -1,0 +1,91 @@
+---
+# ================================================================
+# 마스터 노드: kubeadm init + CNI + kubeconfig
+# ================================================================
+
+# ---------------------------------------------------------------
+# 1. kubeadm 클러스터 초기화
+# ---------------------------------------------------------------
+- name: 클러스터 초기화 여부 확인
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_init_done
+
+- name: kubeadm init 실행
+  command: >
+    kubeadm init
+    --apiserver-advertise-address={{ master_ip }}
+    --pod-network-cidr={{ pod_cidr }}
+    --service-cidr={{ service_cidr }}
+  register: kubeadm_output
+  when: not kubeadm_init_done.stat.exists
+
+# ---------------------------------------------------------------
+# 2. kubectl 설정 (ubuntu 유저)
+# ---------------------------------------------------------------
+- name: .kube 디렉토리 생성
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: admin.conf → kubeconfig 복사
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+# ---------------------------------------------------------------
+# 3. CNI 설치 (Calico)
+# ---------------------------------------------------------------
+- name: Calico CNI 설치
+  command: >
+    kubectl apply -f
+    https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml
+  become_user: ubuntu
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+  register: calico_result
+  until: calico_result.rc == 0
+  retries: 5
+  delay: 10
+
+# ---------------------------------------------------------------
+# 4. Worker Join Command 생성
+# ---------------------------------------------------------------
+- name: Join 명령어 생성
+  command: kubeadm token create --print-join-command
+  register: join_command
+
+- name: Join 명령어를 파일에 저장
+  copy:
+    content: "{{ join_command.stdout }}"
+    dest: /tmp/kubeadm_join_command.sh
+    mode: '0755'
+
+# ---------------------------------------------------------------
+# 5. bash completion + alias 설정
+# ---------------------------------------------------------------
+- name: kubectl bash completion 및 alias 설정
+  blockinfile:
+    path: /home/ubuntu/.bashrc
+    block: |
+      source <(kubectl completion bash)
+      alias k=kubectl
+      complete -o default -F __start_kubectl k
+      export KUBECONFIG=/home/ubuntu/.kube/config
+    owner: ubuntu
+
+# ---------------------------------------------------------------
+# 6. kubeconfig 로컬 복사 (WSL2 → kubectl 직접 사용)
+# ---------------------------------------------------------------
+- name: kubeconfig를 로컬 프로젝트 루트로 복사
+  fetch:
+    src: /home/ubuntu/.kube/config
+    dest: "{{ playbook_dir }}/../../kubeconfig"
+    flat: yes

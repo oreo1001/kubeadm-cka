@@ -1,0 +1,10 @@
+server:
+  service:
+    type: NodePort
+    nodePortHttp: 30080
+    nodePortHttps: 30443
+
+configs:
+  params:
+    # HTTP로 접속 허용 (TLS 없이 테스트용)
+    server.insecure: true

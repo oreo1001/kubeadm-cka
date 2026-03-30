@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+---
+# Backend Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend
+  namespace: production
+  labels:
+    role: backend
+spec:
+  containers:
+    - name: app
+      image: nginx:latest
+      ports:
+        - containerPort: 8080
+---
+# Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: production
+spec:
+  selector:
+    role: backend
+  ports:
+    - port: 8080
+      targetPort: 80
+---
+# Frontend Pod (접근 허용 대상)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend
+  namespace: production
+  labels:
+    role: frontend
+spec:
+  containers:
+    - name: client
+      image: busybox:latest
+      command: ["sleep", "3600"]
+---
+# Blocked Pod (접근 차단 대상)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: blocked-pod
+  namespace: production
+  labels:
+    role: other
+spec:
+  containers:
+    - name: client
+      image: busybox:latest
+      command: ["sleep", "3600"]

@@ -1,0 +1,25 @@
+---
+# ================================================================
+# 워커 노드: kubeadm join
+# ================================================================
+
+- name: 클러스터 조인 여부 확인
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubeadm_join_done
+
+- name: 마스터에서 join 명령어 읽기
+  delegate_to: "{{ groups['master'][0] }}"
+  command: cat /tmp/kubeadm_join_command.sh
+  register: join_command
+  when: not kubeadm_join_done.stat.exists
+
+- name: 클러스터에 조인
+  command: "{{ join_command.stdout }}"
+  when: not kubeadm_join_done.stat.exists
+  register: join_result
+
+- name: 조인 완료 확인
+  debug:
+    msg: "{{ inventory_hostname }} 클러스터 조인 완료"
+  when: not kubeadm_join_done.stat.exists

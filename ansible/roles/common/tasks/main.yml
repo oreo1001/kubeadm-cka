@@ -1,0 +1,168 @@
+---
+# ================================================================
+# 모든 노드 공통 초기화 (kubeadm 사전 요구사항)
+# ================================================================
+
+# ---------------------------------------------------------------
+# 1. 패키지 업데이트 및 의존성 설치
+# ---------------------------------------------------------------
+- name: apt 캐시 업데이트
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: 필수 패키지 설치
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - vim
+      - git
+      - wget
+      - net-tools
+      - bash-completion
+      - socat
+      - conntrack
+    state: present
+
+# ---------------------------------------------------------------
+# 2. Swap 비활성화 (kubelet 요구사항)
+# ---------------------------------------------------------------
+- name: Swap 즉시 비활성화
+  command: swapoff -a
+  changed_when: false
+
+- name: fstab에서 swap 항목 주석 처리 (재부팅 후에도 유지)
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\s+swap\s+.*)$'
+    replace: '# \1'
+
+# ---------------------------------------------------------------
+# 3. 커널 모듈 로드
+# ---------------------------------------------------------------
+- name: 커널 모듈 설정 파일 생성
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+
+- name: overlay 모듈 로드
+  modprobe:
+    name: overlay
+    state: present
+
+- name: br_netfilter 모듈 로드
+  modprobe:
+    name: br_netfilter
+    state: present
+
+# ---------------------------------------------------------------
+# 4. sysctl 네트워킹 설정
+# ---------------------------------------------------------------
+- name: Kubernetes 네트워킹 sysctl 설정
+  copy:
+    dest: /etc/sysctl.d/k8s.conf
+    content: |
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward                 = 1
+
+- name: sysctl 즉시 적용
+  command: sysctl --system
+  changed_when: false
+
+# ---------------------------------------------------------------
+# 5. containerd 설치 및 설정
+# ---------------------------------------------------------------
+- name: containerd 설치
+  apt:
+    name: containerd
+    state: present
+
+- name: containerd 설정 디렉토리 생성
+  file:
+    path: /etc/containerd
+    state: directory
+    mode: '0755'
+
+- name: containerd 기본 설정 생성
+  shell: containerd config default > /etc/containerd/config.toml
+  args:
+    creates: /etc/containerd/config.toml
+
+- name: containerd SystemdCgroup 활성화
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: 'SystemdCgroup = false'
+    replace: 'SystemdCgroup = true'
+  notify: restart containerd
+
+- name: containerd 재시작 및 활성화
+  systemd:
+    name: containerd
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+
+# ---------------------------------------------------------------
+# 6. Kubernetes 패키지 설치 (kubeadm, kubelet, kubectl)
+# ---------------------------------------------------------------
+- name: Kubernetes apt keyring 디렉토리 생성
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Kubernetes GPG 키 추가
+  shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/Release.key | \
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Kubernetes apt 저장소 추가
+  copy:
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/ /\n"
+
+- name: kubeadm, kubelet, kubectl 설치
+  apt:
+    name:
+      - kubeadm
+      - kubelet
+      - kubectl
+    state: present
+    update_cache: yes
+
+- name: Kubernetes 패키지 버전 고정 (apt hold)
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubeadm
+    - kubelet
+    - kubectl
+
+- name: kubelet 서비스 활성화
+  systemd:
+    name: kubelet
+    enabled: yes
+    daemon_reload: yes
+
+# ---------------------------------------------------------------
+# 7. 타임존 설정
+# ---------------------------------------------------------------
+- name: 타임존을 Asia/Seoul로 설정
+  timezone:
+    name: Asia/Seoul
+
+handlers:
+  - name: restart containerd
+    systemd:
+      name: containerd
+      state: restarted
