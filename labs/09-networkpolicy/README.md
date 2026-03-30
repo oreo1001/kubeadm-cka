@@ -32,6 +32,15 @@ kubectl exec -n production frontend -- curl -s http://backend:8080
 kubectl exec -n production blocked-pod -- curl -s --connect-timeout 3 http://backend:8080
 ```
 
+## 삭제
+
+```bash
+kubectl delete -f solution.yaml
+kubectl delete -f setup.yaml
+# 또는
+kubectl delete namespace production
+```
+
 ## 핵심 개념
 
 - NetworkPolicy는 CNI가 지원해야 동작함 (Calico, Cilium 지원 / Flannel 미지원)

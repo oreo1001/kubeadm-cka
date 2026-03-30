@@ -59,6 +59,13 @@ kubectl get pods -n kube-system \
   > /tmp/etcd-pods.txt
 ```
 
+## 삭제
+
+```bash
+# 저장된 파일 제거
+rm -f /tmp/running-pods.txt /tmp/nginx-pods.txt /tmp/etcd-pods.txt
+```
+
 ## 핵심 명령어
 
 | 옵션 | 설명 |

@@ -70,6 +70,18 @@ volumes:
     name: etcd-data
 ```
 
+## 삭제
+
+```bash
+# 백업 파일 제거
+sudo rm -f /opt/etcd-backup.db
+
+# 복원 디렉토리 제거 후 원래 etcd 디렉토리로 복구
+sudo vi /etc/kubernetes/manifests/etcd.yaml
+# volumes.hostPath.path를 /var/lib/etcd-restore → /var/lib/etcd 로 되돌리기
+sudo rm -rf /var/lib/etcd-restore
+```
+
 ## 핵심 개념
 
 - kubeadm 클러스터에서 etcd는 static pod로 실행됨

@@ -49,6 +49,14 @@ kubectl run load-test --image=busybox --rm -it -- \
   /bin/sh -c "while true; do wget -q -O- http://php-apache; done"
 ```
 
+## 삭제
+
+```bash
+kubectl delete -f solution.yaml
+kubectl delete -f setup.yaml
+kubectl delete -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
 ## 핵심 개념
 
 - HPA는 CPU/Memory 메트릭 기반으로 replica 수를 자동 조정

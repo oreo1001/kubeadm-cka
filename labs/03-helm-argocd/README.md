@@ -44,8 +44,15 @@ kubectl get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d && echo
 
 # 7. 접속 (브라우저)
-# http://192.168.56.10:30080
+# http://192.168.121.10:30080
 # 계정: admin / 위에서 조회한 패스워드
+```
+
+## 삭제
+
+```bash
+helm uninstall argocd -n argocd
+kubectl delete namespace argocd
 ```
 
 ## 핵심 Helm 명령어

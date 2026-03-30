@@ -43,7 +43,15 @@ kubectl edit svc web-app-svc -n web
 
 # 확인
 kubectl get svc web-app-svc -n web
-curl http://192.168.56.10:30080
+curl http://192.168.121.10:30080
+```
+
+## 삭제
+
+```bash
+kubectl delete -f solution.yaml
+# 또는
+kubectl delete namespace web
 ```
 
 ## 핵심 개념

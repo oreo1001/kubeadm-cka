@@ -56,6 +56,19 @@ GATEWAY_IP=$(kubectl get svc -n nginx-gateway -o jsonpath='{.items[0].status.loa
 curl -k https://example.local --resolve example.local:443:$GATEWAY_IP
 ```
 
+## 삭제
+
+```bash
+kubectl delete -f solution.yaml
+kubectl delete -f setup.yaml
+kubectl delete secret web-tls-secret -n web
+kubectl delete namespace web
+
+# Gateway API CRD 및 컨트롤러 제거
+kubectl delete -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/v1.4.0/deploy/default/deploy.yaml
+kubectl delete -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+```
+
 ## 기존 Ingress vs 새 Gateway API 비교
 
 | 구성 요소 | Ingress | Gateway API |

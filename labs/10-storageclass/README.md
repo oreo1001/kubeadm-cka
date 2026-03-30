@@ -19,6 +19,14 @@ kubectl get storageclass local-storage
 kubectl describe storageclass local-storage
 ```
 
+## 삭제
+
+```bash
+kubectl delete -f solution.yaml
+# 또는
+kubectl delete storageclass local-storage
+```
+
 ## 핵심 개념
 
 | volumeBindingMode | 설명 |

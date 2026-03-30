@@ -148,7 +148,7 @@ cp inventory/hosts-windows.ini inventory/hosts.ini
 ansible all -m ping
 ansible-playbook playbooks/setup_cluster.yml
 
-export KUBECONFIG=/path/to/kubeadm-cka/kubeconfig
+export KUBECONFIG=/home/anvi1001/kubeadm-cka/kubeconfig
 kubectl get nodes
 ```
 

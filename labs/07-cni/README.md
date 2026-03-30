@@ -32,6 +32,14 @@ kubectl get nodes
 # worker-1   Ready    <none>          6m    v1.31.x
 ```
 
+## 삭제
+
+```bash
+# Calico 제거 (CNI 변경 실습 시)
+kubectl delete -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+# 주의: 제거 후 노드가 NotReady가 됨. 다른 CNI를 바로 설치해야 함
+```
+
 ## 다른 CNI 옵션
 
 ### Flannel (단순한 오버레이 네트워크)

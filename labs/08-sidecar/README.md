@@ -31,6 +31,14 @@ kubectl exec log-pod -c app -- tail /var/log/app.log
 kubectl logs log-pod -c sidecar -f
 ```
 
+## 삭제
+
+```bash
+kubectl delete -f solution.yaml
+# 또는
+kubectl delete pod log-pod
+```
+
 ## 핵심 개념
 
 - **Sidecar 패턴**: 주 컨테이너를 보조하는 컨테이너를 같은 Pod에 배치

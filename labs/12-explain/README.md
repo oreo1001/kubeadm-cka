@@ -40,6 +40,13 @@ kubectl explain pvc.spec.accessModes > /tmp/pvc-accessmodes.txt
 cat /tmp/pvc-accessmodes.txt
 ```
 
+## 삭제
+
+```bash
+# 저장된 파일 제거
+rm -f /tmp/liveness-explain.txt /tmp/strategy-explain.txt /tmp/pvc-accessmodes.txt
+```
+
 ## 유용한 explain 패턴
 
 ```bash
