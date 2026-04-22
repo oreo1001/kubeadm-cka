@@ -20,3 +20,9 @@
 | 12 | Helm으로 ArgoCD 배포 (GitOps) | [12-helm-argocd/](12-helm-argocd/) |
 | 13 | CNI / CRI 설치 | [13-cni-cri/](13-cni-cri/) |
 | 14 | kubectl로 CRD 관리 | [14-crd/](14-crd/) |
+| 15 | RBAC (Role 기반 접근 제어) | [15-rbac/](15-rbac/) |
+| 16 | Cluster Upgrade (kubeadm) | [16-cluster-upgrade/](16-cluster-upgrade/) |
+| 17 | Node Troubleshooting (kubelet 장애 복구) | [17-node-troubleshooting/](17-node-troubleshooting/) |
+| 18 | kubeconfig (사용자 컨텍스트 추가) | [18-kubeconfig/](18-kubeconfig/) |
+| 19 | Cordon / Drain / Taint | [19-cordon-drain-taint/](19-cordon-drain-taint/) |
+| 20 | Static Pod | [20-static-pod/](20-static-pod/) |

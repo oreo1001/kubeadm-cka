@@ -1,0 +1,26 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ci-role
+  namespace: dev
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-rolebinding
+  namespace: dev
+subjects:
+  - kind: ServiceAccount
+    name: ci-bot
+    namespace: dev
+roleRef:
+  kind: Role
+  name: ci-role
+  apiGroup: rbac.authorization.k8s.io

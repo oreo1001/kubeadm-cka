@@ -33,10 +33,33 @@ Ansible로 kubeadm 설치를 자동화하는 CKA 시험 준비 프로젝트.
 │   ├── 12-explain/
 │   ├── 13-pv-pvc/
 │   └── 14-gateway-migration/
+├── inflearn-labs/           # 인프런 커리큘럼 기반 실습 (20개)
+│   ├── 01-configmap/
+│   ├── 02-hpa/
+│   ├── 03-storageclass/
+│   ├── 04-pvc-recovery/
+│   ├── 05-service/
+│   ├── 06-ingress/
+│   ├── 07-gateway-migration/
+│   ├── 08-networkpolicy/
+│   ├── 09-core-components/
+│   ├── 10-sidecar/
+│   ├── 11-resource-priority/
+│   ├── 12-helm-argocd/
+│   ├── 13-cni-cri/
+│   ├── 14-crd/
+│   ├── 15-rbac/
+│   ├── 16-cluster-upgrade/
+│   ├── 17-node-troubleshooting/
+│   ├── 18-kubeconfig/
+│   ├── 19-cordon-drain-taint/
+│   └── 20-static-pod/
 └── scripts/
     ├── setup.sh             # Ansible 실행 래퍼
     └── reset.sh             # 클러스터 리셋
 ```
+
+각 lab 디렉토리는 `setup/`, `solution/`, `cleanup/` 구조를 따른다.
 
 ## 인프라 스펙
 
@@ -92,7 +115,7 @@ bash scripts/reset.sh
 cd ansible && ansible-playbook playbooks/setup_cluster.yml
 ```
 
-## CKA 실습 목록
+## labs/ 실습 목록
 
 | No | 주제 | 디렉토리 |
 |----|------|----------|
@@ -110,6 +133,31 @@ cd ansible && ansible-playbook playbooks/setup_cluster.yml
 | 12 | explain 명령어 활용 | labs/12-explain/ |
 | 13 | PV / PVC 생성 | labs/13-pv-pvc/ |
 | 14 | Ingress → Gateway/HTTPRoute (TLS) 마이그레이션 | labs/14-gateway-migration/ |
+
+## inflearn-labs/ 실습 목록
+
+| No | 주제 | 디렉토리 |
+|----|------|----------|
+| 01 | ConfigMap 수정 (설정 관리) | inflearn-labs/01-configmap/ |
+| 02 | HPA 생성 (부하에 따른 자동 확장) | inflearn-labs/02-hpa/ |
+| 03 | StorageClass 생성 (동적 프로비저닝) | inflearn-labs/03-storageclass/ |
+| 04 | PVC 복구 (Released PV 재사용) | inflearn-labs/04-pvc-recovery/ |
+| 05 | Service 생성 (L4 로드밸런싱) | inflearn-labs/05-service/ |
+| 06 | Ingress 생성 (L7 경로 기반 라우팅) | inflearn-labs/06-ingress/ |
+| 07 | Ingress → Gateway/HTTPRoute 전환 | inflearn-labs/07-gateway-migration/ |
+| 08 | NetworkPolicy (Pod 간 보안 통제) | inflearn-labs/08-networkpolicy/ |
+| 09 | 핵심 컴포넌트 장애 대응 | inflearn-labs/09-core-components/ |
+| 10 | Sidecar 패턴 로그 수집 | inflearn-labs/10-sidecar/ |
+| 11 | 리소스 최적화 + PriorityClass | inflearn-labs/11-resource-priority/ |
+| 12 | Helm으로 ArgoCD 배포 (GitOps) | inflearn-labs/12-helm-argocd/ |
+| 13 | CNI / CRI 설치 | inflearn-labs/13-cni-cri/ |
+| 14 | kubectl로 CRD 관리 | inflearn-labs/14-crd/ |
+| 15 | RBAC (Role 기반 접근 제어) | inflearn-labs/15-rbac/ |
+| 16 | Cluster Upgrade (kubeadm) | inflearn-labs/16-cluster-upgrade/ |
+| 17 | Node Troubleshooting (kubelet 장애 복구) | inflearn-labs/17-node-troubleshooting/ |
+| 18 | kubeconfig (사용자 컨텍스트 추가) | inflearn-labs/18-kubeconfig/ |
+| 19 | Cordon / Drain / Taint | inflearn-labs/19-cordon-drain-taint/ |
+| 20 | Static Pod | inflearn-labs/20-static-pod/ |
 
 ## 주의사항
 

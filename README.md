@@ -1,21 +1,20 @@
 # CKA 온프렘 실습 클러스터 (kubeadm)
 
-Ubuntu 서버에서 KVM/libvirt + Vagrant로 VM 3개를 띄우고,
-kubeadm으로 Kubernetes 클러스터(1 master + 2 worker)를 구성하는 CKA 시험 준비 프로젝트.
+Vagrant + VirtualBox로 온프렘 쿠버네티스 클러스터(1 Master + 3 Worker)를 구성하고,
+Ansible로 kubeadm 설치를 자동화하는 CKA 시험 준비 프로젝트.
 
-Windows(VirtualBox) 환경도 지원한다.
+Linux(KVM/libvirt) 환경도 지원한다.
 
 ## 프로젝트 구조
 
 ```
 .
+├── Vagrantfile              # VM 프로비저닝 (Windows / VirtualBox)
 ├── linux/
-│   └── Vagrantfile          # KVM/libvirt 환경 (기본)
-├── windows/
-│   └── Vagrantfile          # VirtualBox 환경
+│   └── Vagrantfile          # KVM/libvirt 환경
 ├── ansible/
 │   ├── ansible.cfg
-│   ├── group_vars/all.yml
+│   ├── group_vars/all.yml   # k8s 버전, CIDR 설정
 │   ├── inventory/
 │   │   ├── hosts.ini            # 현재 사용 중인 inventory
 │   │   ├── hosts-linux.ini      # Linux IP 템플릿 (192.168.121.x)
@@ -23,97 +22,56 @@ Windows(VirtualBox) 환경도 지원한다.
 │   ├── playbooks/
 │   │   └── setup_cluster.yml
 │   └── roles/
-│       ├── common/
-│       ├── master/
-│       └── worker/
-├── labs/                    # CKA 실습 문제 14개
+│       ├── common/          # swap off, containerd, kubeadm 설치
+│       ├── master/          # kubeadm init, Calico CNI, kubeconfig
+│       └── worker/          # kubeadm join
+├── labs/                    # CKA 실습 문제 (14개)
+├── inflearn-labs/           # 인프런 커리큘럼 기반 실습 (20개)
 └── scripts/
-    ├── setup.sh
-    └── reset.sh
+    ├── setup.sh             # Ansible 실행 래퍼
+    └── reset.sh             # 클러스터 리셋
 ```
 
-## VM 스펙
+## 인프라 스펙
 
-| 역할     | CPU | RAM   |
-|----------|-----|-------|
-| master   | 2   | 2GB   |
-| worker-1 | 1   | 1.5GB |
-| worker-2 | 1   | 1.5GB |
-| **합계** | **4** | **5GB** |
+| 구분     | IP             | CPU | Memory |
+|----------|----------------|-----|--------|
+| master   | 192.168.56.10  | 2   | 4GB    |
+| worker-1 | 192.168.56.11  | 2   | 2GB    |
+| worker-2 | 192.168.56.12  | 2   | 2GB    |
+| worker-3 | 192.168.56.13  | 2   | 2GB    |
 
-- OS: Ubuntu 22.04 LTS
-- Kubernetes: v1.31 (kubeadm)
+- OS: Ubuntu 22.04 (ubuntu/jammy64)
+- Kubernetes: v1.31
 - CNI: Calico v3.28
 - Container runtime: containerd
 
-> master는 kubeadm 요구사항상 CPU 2개 미만이면 preflight 오류가 발생한다.
-> worker는 1 CPU / 1.5GB RAM으로도 CKA 실습에 충분하다.
-> ArgoCD 같이 무거운 워크로드는 worker에 배포되므로 master 메모리는 2GB면 충분하다.
+## 실행 환경
 
----
-
-## 사전 준비 (Linux / KVM)
-
-```bash
-# 1. KVM + libvirt 설치
-sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients
-
-# 2. Vagrant + libvirt 플러그인 설치 
-
-# HashiCorp GPG 키 + 저장소 추가
-wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
-https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
-sudo tee /etc/apt/sources.list.d/hashicorp.list
-
-sudo apt update && sudo apt install -y vagrant
-sudo apt install -y libvirt-dev libvirt-daemon-system libvirt-clients qemu-kvm
-
-vagrant plugin install vagrant-libvirt
-
-# 3. 현재 유저를 libvirt/kvm 그룹에 추가
-sudo usermod -aG libvirt,kvm $USER
-newgrp libvirt   # 또는 재로그인
-
-# 4. Ansible + sshpass 설치
-sudo apt install -y ansible sshpass
-
-# 5. 설치 확인
-kvm-ok
-vagrant --version
-ansible --version
-```
+| 작업              | 환경             |
+|-------------------|------------------|
+| vagrant up/halt   | Windows (CMD/PS) |
+| ansible-playbook  | WSL2             |
+| kubectl           | WSL2             |
 
 ---
 
 ## 실행 순서
 
-### 최초 1회: 의존성 설치
-
 ```bash
-bash scripts/install-deps.sh
+# [Windows] VM 시작
+vagrant up
 
-# 설치 후 그룹 적용
-newgrp libvirt   # 또는 재로그인
-```
+# [WSL2] 사전 요구사항 (최초 1회)
+sudo apt install sshpass
+pip install ansible
 
-### 클러스터 설치
+# [WSL2] 클러스터 설치
+cd ansible
+ansible-playbook playbooks/setup_cluster.yml
 
-```bash
-bash scripts/setup.sh
-```
-
-스크립트가 자동으로 수행하는 작업:
-1. `linux/vagrant up` — VM 3개 시작
-2. `hosts-linux.ini → hosts.ini` 복사
-3. `ansible all -m ping` — SSH 연결 확인
-4. `ansible-playbook setup_cluster.yml` — kubeadm 클러스터 설치
-
-### kubectl 사용
-
-```bash
-export KUBECONFIG=~/kubeadm-cka/kubeconfig
+# [WSL2] kubectl 확인
+export KUBECONFIG=./kubeconfig
 kubectl get nodes
 ```
 
@@ -124,32 +82,36 @@ NAME       STATUS   ROLES           AGE   VERSION
 master     Ready    control-plane   5m    v1.31.x
 worker-1   Ready    <none>          3m    v1.31.x
 worker-2   Ready    <none>          3m    v1.31.x
+worker-3   Ready    <none>          3m    v1.31.x
 ```
 
 ---
 
-## Windows 환경 (VirtualBox)
-
-```powershell
-# 1. VirtualBox / Vagrant 설치 후
-cd windows
-vagrant up
-```
+## Linux 환경 (KVM/libvirt)
 
 ```bash
-# 2. WSL2에서 Ansible 실행
-sudo apt install -y python3-pip sshpass
-pip3 install ansible
+# 1. KVM + libvirt 설치
+sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients
 
-cd /path/to/kubeadm-cka/ansible
-cp inventory/hosts-windows.ini inventory/hosts.ini
-# group_vars/all.yml의 master_ip를 192.168.56.10으로 수정
+# 2. Vagrant + libvirt 플러그인 설치
+wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
+sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y vagrant
+vagrant plugin install vagrant-libvirt
 
-ansible all -m ping
+# 3. 현재 유저를 libvirt/kvm 그룹에 추가
+sudo usermod -aG libvirt,kvm $USER && newgrp libvirt
+
+# 4. Ansible + sshpass 설치
+sudo apt install -y ansible sshpass
+
+# 5. 클러스터 설치
+cd linux && vagrant up
+cd ../ansible
+cp inventory/hosts-linux.ini inventory/hosts.ini
 ansible-playbook playbooks/setup_cluster.yml
-
-export KUBECONFIG=/home/anvi1001/kubeadm-cka/kubeconfig
-kubectl get nodes
 ```
 
 ---
@@ -157,18 +119,15 @@ kubectl get nodes
 ## 클러스터 리셋
 
 ```bash
-cd linux   # 또는 windows
-vagrant destroy -f && vagrant up
+vagrant destroy -f
+vagrant up
 
-cd ../ansible
-ansible-playbook playbooks/setup_cluster.yml
-
-vagrant halt # VM 끄고 중지, 디스크만 남음
+cd ansible && ansible-playbook playbooks/setup_cluster.yml
 ```
 
 ---
 
-## CKA 실습 목록
+## labs/ 실습 목록
 
 | No | 주제 | 디렉토리 |
 |----|------|----------|
@@ -186,19 +145,42 @@ vagrant halt # VM 끄고 중지, 디스크만 남음
 | 12 | explain 명령어 활용 | [labs/12-explain/](labs/12-explain/) |
 | 13 | PV / PVC 생성 | [labs/13-pv-pvc/](labs/13-pv-pvc/) |
 | 14 | Ingress → Gateway/HTTPRoute (TLS) 마이그레이션 | [labs/14-gateway-migration/](labs/14-gateway-migration/) |
-| 15 | ConfigMap 수정 및 Pod 반영 | [labs/15-configmap/](labs/15-configmap/) |
-| 16 | Ingress 생성 (L7 경로 기반 라우팅) | [labs/16-ingress/](labs/16-ingress/) |
-| 17 | 핵심 컴포넌트 장애 대응 (apiserver / kubelet) | [labs/17-troubleshooting/](labs/17-troubleshooting/) |
-| 18 | 리소스 최적화 (LimitRange + ResourceQuota) | [labs/18-resource-management/](labs/18-resource-management/) |
-| 19 | PVC 복구 (Released PV 재사용) | [labs/19-pvc-recovery/](labs/19-pvc-recovery/) |
+
+## inflearn-labs/ 실습 목록
+
+| No | 주제 | 디렉토리 |
+|----|------|----------|
+| 01 | ConfigMap 수정 (설정 관리) | [inflearn-labs/01-configmap/](inflearn-labs/01-configmap/) |
+| 02 | HPA 생성 (부하에 따른 자동 확장) | [inflearn-labs/02-hpa/](inflearn-labs/02-hpa/) |
+| 03 | StorageClass 생성 (동적 프로비저닝) | [inflearn-labs/03-storageclass/](inflearn-labs/03-storageclass/) |
+| 04 | PVC 복구 (Released PV 재사용) | [inflearn-labs/04-pvc-recovery/](inflearn-labs/04-pvc-recovery/) |
+| 05 | Service 생성 (L4 로드밸런싱) | [inflearn-labs/05-service/](inflearn-labs/05-service/) |
+| 06 | Ingress 생성 (L7 경로 기반 라우팅) | [inflearn-labs/06-ingress/](inflearn-labs/06-ingress/) |
+| 07 | Ingress → Gateway/HTTPRoute 전환 | [inflearn-labs/07-gateway-migration/](inflearn-labs/07-gateway-migration/) |
+| 08 | NetworkPolicy (Pod 간 보안 통제) | [inflearn-labs/08-networkpolicy/](inflearn-labs/08-networkpolicy/) |
+| 09 | 핵심 컴포넌트 장애 대응 | [inflearn-labs/09-core-components/](inflearn-labs/09-core-components/) |
+| 10 | Sidecar 패턴 로그 수집 | [inflearn-labs/10-sidecar/](inflearn-labs/10-sidecar/) |
+| 11 | 리소스 최적화 + PriorityClass | [inflearn-labs/11-resource-priority/](inflearn-labs/11-resource-priority/) |
+| 12 | Helm으로 ArgoCD 배포 (GitOps) | [inflearn-labs/12-helm-argocd/](inflearn-labs/12-helm-argocd/) |
+| 13 | CNI / CRI 설치 | [inflearn-labs/13-cni-cri/](inflearn-labs/13-cni-cri/) |
+| 14 | kubectl로 CRD 관리 | [inflearn-labs/14-crd/](inflearn-labs/14-crd/) |
+| 15 | RBAC (Role 기반 접근 제어) | [inflearn-labs/15-rbac/](inflearn-labs/15-rbac/) |
+| 16 | Cluster Upgrade (kubeadm) | [inflearn-labs/16-cluster-upgrade/](inflearn-labs/16-cluster-upgrade/) |
+| 17 | Node Troubleshooting (kubelet 장애 복구) | [inflearn-labs/17-node-troubleshooting/](inflearn-labs/17-node-troubleshooting/) |
+| 18 | kubeconfig (사용자 컨텍스트 추가) | [inflearn-labs/18-kubeconfig/](inflearn-labs/18-kubeconfig/) |
+| 19 | Cordon / Drain / Taint | [inflearn-labs/19-cordon-drain-taint/](inflearn-labs/19-cordon-drain-taint/) |
+| 20 | Static Pod | [inflearn-labs/20-static-pod/](inflearn-labs/20-static-pod/) |
 
 ---
 
 ## 주의사항
 
-- `ansible-playbook`은 `ansible/` 디렉토리 안에서 실행해야 `ansible.cfg`가 적용됨
-- 환경 전환 시 `hosts.ini`와 `group_vars/all.yml`의 `master_ip` 두 곳을 수정해야 함
-- kubeadm master는 **CPU 2개 필수** (1개면 preflight 오류)
+- `vagrant up` 최초 실행 시 box 다운로드로 시간 소요 (약 1~2GB)
+- Ansible은 WSL2에서 실행: `pip install ansible` + `sudo apt install sshpass`
+- kubeadm은 노드당 최소 2 CPU, 2GB RAM 필요
+- `serial: 1`: common role은 순차 실행 (containerd 설치 충돌 방지)
+- kubeconfig 파일은 `./kubeconfig`에 자동 생성됨
+- 환경 전환 시 `hosts.ini`와 `group_vars/all.yml`의 `master_ip` 두 곳 수정 필요
 
 ---
 
@@ -207,17 +189,14 @@ vagrant halt # VM 끄고 중지, 디스크만 남음
 ### ansible ping 실패
 
 ```bash
-# SSH 직접 접속 테스트
-ssh -i ~/.vagrant.d/insecure_private_keys/vagrant.key.rsa ubuntu@192.168.121.10
-
-# vagrant ssh-config로 정확한 키 경로 확인
+ssh -i ~/.vagrant.d/insecure_private_keys/vagrant.key.rsa vagrant@192.168.56.10
 cd linux && vagrant ssh-config master
 ```
 
 ### kubeadm preflight 오류 — CPU
 
 ```bash
-ssh ubuntu@192.168.121.10 "nproc"
+ssh vagrant@192.168.56.10 "nproc"
 # 2 이상이어야 함
 ```
 
