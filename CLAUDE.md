@@ -34,6 +34,8 @@ Ansible로 kubeadm 설치를 자동화하는 CKA 시험 준비 프로젝트.
 │   ├── 13-pv-pvc/
 │   └── 14-gateway-migration/
 ├── inflearn-labs/           # 인프런 커리큘럼 기반 실습 (20개)
+├── mock-labs/               # 모의시험 유형 변형 실습 (6개, 기본 문제 다음 단계)
+├── study/                   # 개인 학습 노트 (gitignore, 로컬 전용)
 │   ├── 01-configmap/
 │   ├── 02-hpa/
 │   ├── 03-storageclass/

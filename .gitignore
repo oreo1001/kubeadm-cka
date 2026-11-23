@@ -7,3 +7,6 @@ kubeconfig
 # 임시파일
 *.retry
 *.log
+
+# 개인 학습 노트 (유료 강의 요약 — 공개 repo에 올리지 않는다)
+study/
