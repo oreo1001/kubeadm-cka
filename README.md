@@ -27,6 +27,8 @@ Linux(KVM/libvirt) 환경도 지원한다.
 │       └── worker/          # kubeadm join
 ├── labs/                    # CKA 실습 문제 (14개)
 ├── inflearn-labs/           # 인프런 커리큘럼 기반 실습 (20개)
+├── mock-labs/               # 모의시험 유형 변형 실습 (6개, 기본 문제 다음 단계)
+├── study/                   # 개인 학습 노트 (gitignore, 로컬 전용)
 └── scripts/
     ├── setup.sh             # Ansible 실행 래퍼
     └── reset.sh             # 클러스터 리셋
@@ -170,6 +172,19 @@ cd ansible && ansible-playbook playbooks/setup_cluster.yml
 | 18 | kubeconfig (사용자 컨텍스트 추가) | [inflearn-labs/18-kubeconfig/](inflearn-labs/18-kubeconfig/) |
 | 19 | Cordon / Drain / Taint | [inflearn-labs/19-cordon-drain-taint/](inflearn-labs/19-cordon-drain-taint/) |
 | 20 | Static Pod | [inflearn-labs/20-static-pod/](inflearn-labs/20-static-pod/) |
+
+## mock-labs/ 실습 목록
+
+모의시험에서 반복된 유형을 한 단계 어렵게 바꾼 문제다. 자세한 내용은 [mock-labs/README.md](mock-labs/README.md).
+
+| No | 주제 | 디렉토리 |
+|----|------|----------|
+| 01 | HPA 메모리 지표 + scaleDown behavior | [mock-labs/01-hpa-behavior/](mock-labs/01-hpa-behavior/) |
+| 02 | Gateway API 카나리 (가중치 + 헤더) | [mock-labs/02-gateway-canary/](mock-labs/02-gateway-canary/) |
+| 03 | Helm 버전 지정 설치 → 업그레이드 → 롤백 | [mock-labs/03-helm-version/](mock-labs/03-helm-version/) |
+| 04 | Control plane 장애 2건 | [mock-labs/04-controlplane-failure/](mock-labs/04-controlplane-failure/) |
+| 05 | kubelet 설정 장애 2건 | [mock-labs/05-kubelet-failure/](mock-labs/05-kubelet-failure/) |
+| 06 | Native sidecar | [mock-labs/06-native-sidecar/](mock-labs/06-native-sidecar/) |
 
 ---
 
