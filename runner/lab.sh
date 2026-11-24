@@ -17,6 +17,7 @@ export KUBECONFIG="${KUBECONFIG_CKA:-$HOME/.kube/cka-kind}"
 export PATH="$HOME/.local/bin:$PATH"
 CALICO_VERSION="${CALICO_VERSION:-v3.30.3}"
 GATEWAY_API_VERSION="${GATEWAY_API_VERSION:-v1.3.0}"
+METRICS_SERVER_VERSION="${METRICS_SERVER_VERSION:-v0.9.1}"
 NODES=("$CLUSTER-control-plane" "$CLUSTER-worker" "$CLUSTER-worker2")
 
 log() { echo "[lab] $*"; }
@@ -60,9 +61,13 @@ wait_ready() {
   wait_api
   log "노드 Ready 대기"
   kubectl wait --for=condition=Ready nodes --all --timeout=300s
-  kubectl -n kube-system rollout status deploy/coredns --timeout=180s
-  # 멈췄다 켠 직후에는 시스템 Pod들이 다시 뜨는 중이다 — 다 Ready일 때 준비 완료로 본다
-  kubectl -n kube-system wait --for=condition=Ready pods --all --timeout=240s >/dev/null
+  # rollout 중 삭제되는 이전 Pod까지 kubectl wait --all로 기다리면 영원히 Ready가 되지 않는다.
+  # 컨트롤러의 현재 세대를 확인하고, 컨트롤러가 없는 static control-plane Pod만 직접 기다린다.
+  local controller
+  while IFS= read -r controller; do
+    kubectl -n kube-system rollout status "$controller" --timeout=240s
+  done < <(kubectl -n kube-system get deployments,daemonsets -o name)
+  kubectl -n kube-system wait --for=condition=Ready pods -l tier=control-plane --timeout=180s >/dev/null
 }
 
 # 만들다 실패하면(예: Calico 다운로드) 반쯤 된 클러스터를 지워서 다음 env-up이 처음부터 다시 만들게 한다
@@ -87,7 +92,7 @@ create() {
   kubectl -n kube-system rollout status ds/calico-node --timeout=300s
   wait_ready
   log "metrics-server 설치 (kind라서 --kubelet-insecure-tls)"
-  kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml >/dev/null
+  kubectl apply -f "https://github.com/kubernetes-sigs/metrics-server/releases/download/$METRICS_SERVER_VERSION/components.yaml" >/dev/null
   kubectl -n kube-system patch deploy metrics-server --type=json \
     -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]' >/dev/null
   log "Gateway API CRD $GATEWAY_API_VERSION 설치"
