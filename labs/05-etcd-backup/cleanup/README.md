@@ -1,5 +1,7 @@
 # 삭제
 
+A100 kind: `cleanup/run.sh`가 아래를 대신한다. 손으로 할 때 노드 접속: `docker exec -it cka-control-plane bash` (root라 `sudo` 불필요)
+
 ```bash
 sudo rm -f /opt/etcd-backup.db
 sudo rm -rf /var/lib/etcd-restore

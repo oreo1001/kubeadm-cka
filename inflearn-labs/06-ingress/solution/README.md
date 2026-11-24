@@ -13,9 +13,10 @@ kubectl describe ingress web-ingress -n web
 NODE_PORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
   -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
 
-# 접근 테스트
-curl http://192.168.56.11:$NODE_PORT/
-curl http://192.168.56.11:$NODE_PORT/api
+# 접근 테스트 (A100 호스트에서, 아무 노드 IP)
+NODE_IP=$(kubectl get node cka-worker -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+curl http://$NODE_IP:$NODE_PORT/
+curl http://$NODE_IP:$NODE_PORT/api
 ```
 
 ## 핵심 개념

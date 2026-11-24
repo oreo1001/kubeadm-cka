@@ -2,9 +2,9 @@
 
 ```bash
 kubectl get nodes
-kubectl describe node worker-1 | sed -n '/Conditions/,/Addresses/p'   # "Kubelet stopped posting node status"
+kubectl describe node worker-1 | sed -n '/Conditions/,/Addresses/p'   # "Kubelet stopped posting node status" (A100 kind: cka-worker)
 
-ssh worker-1
+ssh worker-1                           # A100 kind: docker exec -it cka-worker bash (root라 sudo 불필요)
 sudo systemctl status kubelet          # activating (auto-restart) 반복
 sudo journalctl -u kubelet -n 50 --no-pager
 #  -> "unable to load client CA file /etc/kubernetes/pki/ca-cert.crt: no such file"

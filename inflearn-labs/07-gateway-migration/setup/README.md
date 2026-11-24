@@ -1,16 +1,16 @@
 # 사전 준비
 
-## Gateway API CRD 설치
+## Gateway API CRD
 
-```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
-```
+A100 kind 환경은 `env-up` 때 Gateway API CRD(standard, v1.3.0)가 이미 설치돼 있다.
 
 ## NGINX Gateway Fabric 설치
 
+kind에는 LoadBalancer가 없으므로 NodePort용 매니페스트를 쓴다(GatewayClass `nginx`).
+
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/v1.4.0/deploy/crds.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/v1.4.0/deploy/default/deploy.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.8.1/deploy/crds.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.8.1/deploy/nodeport/deploy.yaml
 ```
 
 ## 자체 서명 TLS 인증서 생성

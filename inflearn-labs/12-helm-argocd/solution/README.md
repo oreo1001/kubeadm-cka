@@ -3,8 +3,9 @@
 ## 풀이 명령어
 
 ```bash
-# Helm 설치 (미설치 시)
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# Helm 설치 (미설치 시) — A100에서는 setup/run.sh가 ~/.local/bin/helm 으로 설치한다
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=$HOME/.local/bin USE_SUDO=false bash
+export PATH="$HOME/.local/bin:$PATH"
 
 # namespace 생성
 kubectl create namespace argocd
@@ -33,7 +34,8 @@ kubectl get secret argocd-initial-admin-secret \
   -n argocd \
   -o jsonpath='{.data.password}' | base64 -d && echo
 
-# 접속: http://192.168.56.11:30080  (admin / 위 패스워드)
+# 접속 (A100 호스트에서, 아무 노드 IP): http://$NODE_IP:30080  (admin / 위 패스워드)
+NODE_IP=$(kubectl get node cka-worker -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 ```
 
 ## 핵심 Helm 명령어

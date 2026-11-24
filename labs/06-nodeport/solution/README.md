@@ -29,7 +29,8 @@ kubectl edit svc web-app-svc -n web
 
 # 확인
 kubectl get svc web-app-svc -n web
-curl http://192.168.56.11:30080
+NODE_IP=$(kubectl get node cka-worker -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+curl http://$NODE_IP:30080
 ```
 
 ## 핵심 개념

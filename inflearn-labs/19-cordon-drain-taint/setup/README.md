@@ -10,5 +10,5 @@ kubectl apply -f setup.yaml
 
 ```bash
 # worker-2에 Pod가 배포된 것 확인
-kubectl get pods -o wide | grep worker-2
+kubectl get pods -o wide | grep cka-worker2
 ```

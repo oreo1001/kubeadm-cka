@@ -29,8 +29,9 @@ kubectl describe svc backend-nodeport
 # ClusterIP 접근 테스트
 kubectl run test --image=busybox --rm -it -- wget -qO- http://backend-svc
 
-# NodePort 접근 테스트
-curl http://192.168.56.11:30080
+# NodePort 접근 테스트 (A100 호스트에서, 아무 노드 IP)
+NODE_IP=$(kubectl get node cka-worker -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+curl http://$NODE_IP:30080
 ```
 
 ## 핵심 개념

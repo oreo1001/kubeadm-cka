@@ -11,6 +11,8 @@
 
 생성 후 `kubectl get pod`로 `static-web-master` Pod가 Running 상태인지 확인하시오.
 
+> A100 kind 환경: master 노드 이름이 `cka-control-plane`이라 Pod 이름은 `static-web-cka-control-plane`이 된다. 노드 접속: `docker exec -it cka-control-plane bash`
+
 ---
 
 - [사전 준비](setup/)

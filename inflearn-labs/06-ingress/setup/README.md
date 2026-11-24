@@ -2,8 +2,10 @@
 
 ## nginx Ingress Controller 설치
 
+`setup/run.sh`가 kind용 매니페스트로 설치한다(IngressClass `nginx`).
+
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/baremetal/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.15.1/deploy/static/provider/kind/deploy.yaml
 
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \

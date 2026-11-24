@@ -11,9 +11,13 @@ kubectl get gateway web-gateway -n web
 kubectl get httproute web-route -n web
 kubectl describe gateway web-gateway -n web
 
-# 접속 테스트
-GATEWAY_IP=$(kubectl get svc -n nginx-gateway -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
-curl -k https://example.local --resolve example.local:443:$GATEWAY_IP
+# 접속 테스트 (NGF 2.x는 Gateway마다 데이터플레인 Service <gateway>-nginx 를 만든다. kind에서는 NodePort)
+kubectl -n web get svc web-gateway-nginx
+NODE_IP=$(kubectl get node cka-worker -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+HTTPS_PORT=$(kubectl -n web get svc web-gateway-nginx -o jsonpath='{.spec.ports[?(@.port==443)].nodePort}')
+HTTP_PORT=$(kubectl -n web get svc web-gateway-nginx -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+curl -k https://example.local:$HTTPS_PORT --resolve example.local:$HTTPS_PORT:$NODE_IP
+curl -I -H 'Host: example.local' http://$NODE_IP:$HTTP_PORT   # 301 → https
 ```
 
 ## 기존 Ingress vs 새 Gateway API 비교

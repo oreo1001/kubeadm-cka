@@ -4,6 +4,8 @@
 
 다음 두 가지 장애 상황을 진단하고 복구하시오.
 
+> A100 kind 환경: `master` · `worker-1` · `worker-2` = 노드 `cka-control-plane` · `cka-worker` · `cka-worker2`. 노드 접속: `docker exec -it cka-control-plane bash` (worker-1은 `cka-worker`). 노드 안에서는 root라 `sudo` 없이 실행한다.
+
 ### 문제 1: kube-apiserver 장애
 `master` 노드에서 `kube-apiserver` Pod가 시작되지 않는다.
 원인을 찾아 복구하시오.

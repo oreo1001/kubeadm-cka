@@ -7,6 +7,8 @@
 
 힌트: 노드에 SSH로 접속하여 kubelet 서비스 상태를 확인하라.
 
+> A100 kind 환경: `master` · `worker-1` · `worker-2` = 노드 `cka-control-plane` · `cka-worker` · `cka-worker2`. worker-1 노드 접속: `docker exec -it cka-worker bash`
+
 ---
 
 - [사전 준비](setup/)

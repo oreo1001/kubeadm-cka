@@ -4,9 +4,10 @@
 kubectl apply -f solution.yaml
 kubectl -n shop describe httproute shop-route   # Accepted=True, ResolvedRefs=True
 
-# 확인: Gateway 데이터플레인 Service의 NodePort로 호출
-kubectl get svc -A | grep -i gateway
-NODE=<worker IP>; PORT=<80에 매핑된 NodePort>
+# 확인: Gateway 데이터플레인 Service(NGF 2.x: shop-gw-nginx)의 NodePort로 호출
+kubectl -n shop get svc shop-gw-nginx
+NODE=$(kubectl get node cka-worker -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+PORT=$(kubectl -n shop get svc shop-gw-nginx -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
 for i in $(seq 20); do curl -s -H 'Host: shop.local' http://$NODE:$PORT/; done | sort | uniq -c   # v1 약 16, v2 약 4
 curl -s -H 'Host: shop.local' -H 'x-canary: true' http://$NODE:$PORT/                          # 항상 v2
 ```

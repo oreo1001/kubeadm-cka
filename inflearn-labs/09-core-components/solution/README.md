@@ -2,6 +2,9 @@
 
 ## 장애 시뮬레이션
 
+A100 kind 환경에서는 `setup/run.sh`가 아래를 대신 실행한다.
+노드 접속: `docker exec -it cka-control-plane bash` / worker-1: `docker exec -it cka-worker bash` (노드 안은 root라 `sudo`는 빼고 실행).
+
 ```bash
 # [master 노드에서] 문제 1: kube-apiserver manifest에 잘못된 포트 주입
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kube-apiserver.yaml.bak

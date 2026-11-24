@@ -32,8 +32,8 @@ cat /tmp/ingress-rules.txt
 ## Task C: Gateway API CRD
 
 ```bash
-# Gateway API CRD 설치
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+# Gateway API CRD 설치 (A100 kind 환경은 env-up 때 v1.3.0이 이미 설치됨 — 낮은 버전으로 덮어쓰지 말 것)
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
 
 # 추가된 CRD 확인
 kubectl get crd | grep gateway

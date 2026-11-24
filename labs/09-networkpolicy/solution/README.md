@@ -10,10 +10,10 @@ kubectl describe networkpolicy allow-frontend-to-backend -n production
 
 # 통신 테스트
 # frontend → backend (허용되어야 함)
-kubectl exec -n production frontend -- curl -s http://backend:8080
+kubectl exec -n production frontend -- wget -qO- -T 3 http://backend:8080   # busybox에는 curl이 없어 wget 사용
 
 # blocked-pod → backend (차단되어야 함)
-kubectl exec -n production blocked-pod -- curl -s --connect-timeout 3 http://backend:8080
+kubectl exec -n production blocked-pod -- wget -qO- -T 3 http://backend:8080   # 시간 초과로 실패해야 정상
 ```
 
 ## 핵심 개념

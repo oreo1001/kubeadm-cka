@@ -1,5 +1,9 @@
 # 풀이
 
+노드 접속: `docker exec -it cka-control-plane bash` (root라 `sudo` 불필요)
+
+> k8s 1.34의 etcd는 3.6이다. etcd 3.6부터 `etcdctl snapshot status/restore`가 없어졌고 `etcdutl`을 쓴다(`snapshot save`는 그대로 `etcdctl`).
+
 ## Task A: 백업
 
 ```bash
@@ -13,17 +17,17 @@ ETCDCTL_API=3 etcdctl snapshot save /opt/etcd-backup.db \
   --cert=/etc/kubernetes/pki/etcd/server.crt \
   --key=/etc/kubernetes/pki/etcd/server.key
 
-# 백업 검증
-ETCDCTL_API=3 etcdctl snapshot status /opt/etcd-backup.db \
-  --write-out=table
+# 백업 검증 (etcd 3.6+: etcdutl)
+etcdutl snapshot status /opt/etcd-backup.db --write-out=table
 ```
 
 ## Task B: 복원
 
 ```bash
-# 1. 스냅샷 복원 (새 데이터 디렉토리로)
-ETCDCTL_API=3 etcdctl snapshot restore /opt/etcd-backup.db \
+# 1. 스냅샷 복원 (새 데이터 디렉토리로, etcd 3.6+: etcdutl)
+etcdutl snapshot restore /opt/etcd-backup.db \
   --data-dir=/var/lib/etcd-restore
+# (etcd 3.5 이하라면: ETCDCTL_API=3 etcdctl snapshot restore ...)
 
 # 2. etcd static pod 매니페스트 수정
 sudo vi /etc/kubernetes/manifests/etcd.yaml

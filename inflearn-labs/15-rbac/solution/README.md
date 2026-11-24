@@ -6,13 +6,15 @@
 # 방법 1: YAML 적용
 kubectl apply -f solution.yaml
 
-# 방법 2: 명령형 (시험 권장)
-kubectl create role ci-role \
-  --verb=get,list,watch \
-  --resource=pods \
-  --verb=create,update,patch,delete \
-  --resource=deployments \
-  -n dev
+# 방법 2: 명령형으로 뼈대 → YAML로 규칙 나누기 (시험 권장)
+# 주의: kubectl create role에 --verb/--resource를 여러 번 주면 "모든 verb × 모든 resource" 한 규칙이 된다.
+#       그러면 Pod에도 create/delete가 생겨 권한이 넘친다. 규칙이 둘이면 YAML로 나눠 쓴다.
+kubectl create role ci-role --verb=get,list,watch --resource=pods -n dev --dry-run=client -o yaml > role.yaml
+# role.yaml의 rules에 두 번째 규칙을 추가:
+#   - apiGroups: ["apps"]
+#     resources: ["deployments"]
+#     verbs: ["create", "update", "patch", "delete"]
+kubectl apply -f role.yaml
 
 kubectl create rolebinding ci-rolebinding \
   --role=ci-role \

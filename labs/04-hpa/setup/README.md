@@ -8,6 +8,8 @@ kubectl apply -f setup.yaml
 
 ## metrics-server 설치 (HPA에 필요)
 
+> A100 kind 환경에는 env-up 때 이미 설치돼 있다. `kubectl top nodes`로 확인만 한다.
+
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 

@@ -5,7 +5,7 @@
 노드가 여전히 NotReady라면:
 
 ```bash
-ssh vagrant@192.168.56.11
-sudo systemctl start kubelet
-sudo systemctl enable kubelet
+docker exec -it cka-worker bash
+systemctl start kubelet
+systemctl enable kubelet
 ```

@@ -1,0 +1,13 @@
+# systemd --user 서비스 예시: ~/.config/systemd/user/cka-runner.service
+# 설치: systemctl --user daemon-reload && systemctl --user enable --now cka-runner
+# 로그아웃 뒤에도 돌리려면 linger가 필요해요(관리자 권한). 안 되면 runner/README.md의 tmux 방법을 써요.
+[Unit]
+Description=CKA lab runner (polls cka-prep site)
+
+[Service]
+ExecStart=/usr/bin/python3 %h/cka-lab/runner/agent.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

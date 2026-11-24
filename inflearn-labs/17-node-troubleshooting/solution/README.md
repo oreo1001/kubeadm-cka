@@ -5,10 +5,10 @@
 ```bash
 # 1. 노드 상태 확인
 kubectl get nodes
-kubectl describe node worker-1 | grep -A 10 Conditions
+kubectl describe node cka-worker | grep -A 10 Conditions
 
-# 2. worker-1에 SSH 접속
-ssh vagrant@192.168.56.11
+# 2. worker-1(kind: cka-worker)에 접속 (시험에서는 ssh worker-1)
+docker exec -it cka-worker bash   # 노드 안은 root라 아래 sudo는 빼도 된다
 
 # 3. kubelet 상태 확인
 sudo systemctl status kubelet
@@ -25,10 +25,10 @@ sudo systemctl status kubelet
 
 exit
 
-# 7. [WSL2] 노드 복구 확인 (약 30초~1분 소요)
+# 7. [호스트] 노드 복구 확인 (약 30초~1분 소요)
 kubectl get nodes
 # NAME       STATUS   ROLES    AGE   VERSION
-# worker-1   Ready    <none>   Xd    v1.31.x
+# cka-worker   Ready    <none>   Xd    v1.34.x
 ```
 
 ## 핵심 개념

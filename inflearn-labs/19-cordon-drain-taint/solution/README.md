@@ -3,15 +3,15 @@
 ## 풀이 명령어
 
 ```bash
-# 1. worker-2 cordon (새 Pod 스케줄 중단)
-kubectl cordon worker-2
+# 1. worker-2(kind: cka-worker2) cordon (새 Pod 스케줄 중단)
+kubectl cordon cka-worker2
 
 kubectl get nodes
 # NAME       STATUS                     ROLES    AGE   VERSION
-# worker-2   Ready,SchedulingDisabled   <none>   Xd    v1.31.x
+# cka-worker2   Ready,SchedulingDisabled   <none>   Xd    v1.34.x
 
 # 2. worker-2 drain (기존 Pod 이동)
-kubectl drain worker-2 \
+kubectl drain cka-worker2 \
   --ignore-daemonsets \
   --delete-emptydir-data
 
@@ -19,19 +19,23 @@ kubectl drain worker-2 \
 kubectl get pods -o wide
 
 # 3. taint 추가
-kubectl taint node worker-2 env=maintenance:NoSchedule
+kubectl taint node cka-worker2 env=maintenance:NoSchedule
 
 # taint 확인
-kubectl describe node worker-2 | grep Taint
+kubectl describe node cka-worker2 | grep Taint
 # Taints: env=maintenance:NoSchedule
 
 # 4. taint를 tolerate하는 Pod 생성
 kubectl apply -f solution.yaml
 
-# Pod가 worker-2에 스케줄됐는지 확인
+# Pod 확인
 kubectl get pod maintenance-pod -o wide
 # NAME              READY   STATUS    NODE
-# maintenance-pod   1/1     Running   worker-2
+# maintenance-pod   1/1     Running   cka-worker   ← worker-2가 아니어도 정상
+#
+# toleration은 "그 taint가 있어도 들어갈 수 있다"는 허락일 뿐, 그 노드로 끌어당기지 않는다.
+# 게다가 worker-2는 cordon 상태라 node.kubernetes.io/unschedulable taint도 붙어 있어 여기엔 안 뜬다.
+# 특정 노드에 꼭 보내야 하면 nodeSelector/affinity가 필요하고, cordon된 노드면 uncordon도 해야 한다.
 ```
 
 ## 핵심 개념

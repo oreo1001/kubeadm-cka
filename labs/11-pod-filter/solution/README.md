@@ -35,8 +35,11 @@ cat /tmp/nginx-pods.txt
 
 ```bash
 # Pod 이름만 저장
+# "이름에 etcd가 포함"이고 컨테이너가 여러 개일 수 있으니, 첫 컨테이너 == 비교가 아니라 전체에서 찾는다.
+# jsonpath 필터에는 '포함' 연산자가 없어서 Pod 이름과 컨테이너 이름을 뽑은 뒤 awk로 거른다.
 kubectl get pods -n kube-system \
-  -o jsonpath='{range .items[?(@.spec.containers[0].name=="etcd")]}{.metadata.name}{"\n"}{end}' \
+  -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.containers[*].name}{"\n"}{end}' \
+  | awk '{for (i=2;i<=NF;i++) if ($i ~ /etcd/) {print $1; break}}' \
   > /tmp/etcd-pods.txt
 ```
 

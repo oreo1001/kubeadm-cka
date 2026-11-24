@@ -1,5 +1,7 @@
 # 풀이
 
+A100 kind: static pod 이름 끝이 `-master` 대신 `-cka-control-plane`이다. 노드 접속: `docker exec -it cka-control-plane bash` (root라 `sudo` 불필요)
+
 ```bash
 kubectl get pods -n kube-system            # scheduler, controller-manager가 CrashLoopBackOff/Error
 kubectl get deploy,rs,pod -l app=cp-test   # RS/Pod가 없거나 Pending

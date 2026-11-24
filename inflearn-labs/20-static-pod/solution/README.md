@@ -3,11 +3,11 @@
 ## 풀이 명령어
 
 ```bash
-# master 노드에 SSH 접속
-ssh vagrant@192.168.56.10
+# master 노드 접속 (시험에서는 ssh master)
+docker exec -it cka-control-plane bash
 
-# static pod manifest 작성
-sudo tee /etc/kubernetes/manifests/static-web.yaml << 'EOF'
+# static pod manifest 작성 (노드 안은 root라 sudo 불필요)
+tee /etc/kubernetes/manifests/static-web.yaml << 'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
@@ -24,10 +24,10 @@ EOF
 # kubelet이 자동으로 감지하여 Pod 생성 (약 10~30초)
 exit
 
-# [WSL2] Pod 확인 — 이름이 static-web-master 형태로 생성됨
-kubectl get pod static-web-master
-# NAME               READY   STATUS    RESTARTS   AGE
-# static-web-master  1/1     Running   0          30s
+# [호스트] Pod 확인 — 이름이 static-web-<노드이름> 형태로 생성됨 (kind: static-web-cka-control-plane)
+kubectl get pod static-web-cka-control-plane
+# NAME                           READY   STATUS    RESTARTS   AGE
+# static-web-cka-control-plane   1/1     Running   0          30s
 ```
 
 ## 핵심 개념

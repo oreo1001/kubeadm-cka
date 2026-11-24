@@ -11,10 +11,11 @@ kubectl get gateway web-gateway -n web
 kubectl get httproute -n web
 kubectl describe gateway web-gateway -n web
 
-# 테스트
-GATEWAY_IP=$(kubectl get svc -n nginx-gateway \
-  -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
-curl -k https://example.local --resolve example.local:443:$GATEWAY_IP
+# 테스트 (A100 호스트에서) — NGF가 web namespace에 web-gateway-nginx Service(NodePort)를 만든다
+NODE_IP=$(kubectl get node cka-worker -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+HTTPS_PORT=$(kubectl get svc -n web web-gateway-nginx \
+  -o jsonpath='{.spec.ports[?(@.port==443)].nodePort}')
+curl -k https://example.local:$HTTPS_PORT --resolve example.local:$HTTPS_PORT:$NODE_IP
 ```
 
 ## 핵심 개념

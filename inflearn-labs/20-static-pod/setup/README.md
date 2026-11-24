@@ -3,11 +3,11 @@
 ## Static Pod 경로 확인
 
 ```bash
-# master 노드에 SSH 접속
-ssh vagrant@192.168.56.10
+# master 노드 접속 (시험에서는 ssh master)
+docker exec -it cka-control-plane bash
 
-# static pod manifest 경로 확인
-sudo cat /var/lib/kubelet/config.yaml | grep staticPodPath
+# static pod manifest 경로 확인 (노드 안은 root라 sudo 불필요)
+cat /var/lib/kubelet/config.yaml | grep staticPodPath
 # staticPodPath: /etc/kubernetes/manifests
 
 # 현재 static pod 목록 확인

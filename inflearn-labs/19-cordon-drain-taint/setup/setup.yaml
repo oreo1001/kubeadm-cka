@@ -14,7 +14,7 @@ spec:
         app: drain-test
     spec:
       nodeSelector:
-        kubernetes.io/hostname: worker-2
+        kubernetes.io/hostname: cka-worker2   # 문제의 worker-2 = kind 노드 cka-worker2
       containers:
         - name: nginx
           image: nginx:alpine
